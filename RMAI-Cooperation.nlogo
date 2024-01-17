@@ -81,17 +81,13 @@ end
 
 to grow-grass  ;; patch procedure
   if not occupied? [
-    ifelse ( grass >= low-high-threshold) [
-      if high-growth-chance >= random-float 100
-      [ set grass grass + 1 ]
-    ][
-      if low-growth-chance >= random-float 100
+    if grass-grow-probablity >= random-float 100
       [ set grass grass + 1 ]
     ]
     if grass > max-grass-height
     [ set grass max-grass-height ]
-  ]
 end
+
 
 to color-grass  ;; patch procedure
   if not occupied? [
@@ -244,21 +240,6 @@ NIL
 HORIZONTAL
 
 SLIDER
-337
-392
-505
-425
-high-growth-chance
-high-growth-chance
-0.0
-99.0
-77.0
-1.0
-1
-NIL
-HORIZONTAL
-
-SLIDER
 155
 80
 332
@@ -267,7 +248,7 @@ stride-length
 stride-length
 0.0
 0.3
-0.3
+0.07
 0.01
 1
 NIL
@@ -336,13 +317,13 @@ HORIZONTAL
 SLIDER
 337
 425
-505
+492
 458
-low-growth-chance
-low-growth-chance
+grass-grow-probablity
+grass-grow-probablity
 0.0
 99.0
-30.0
+40.0
 1.0
 1
 NIL
@@ -433,7 +414,7 @@ occupation-percentage
 occupation-percentage
 0
 0.9
-0.2
+0.9
 0.1
 1
 NIL
@@ -470,9 +451,7 @@ REPRODUCTION-THRESHOLD: If a cow's energy reaches the value of this slider, it r
 
 REPRODUCTION-COST: Each time a cow reproduces, it loses the amount of energy set by this slider.  This value represents the energy cost of reproduction.
 
-LOW-GROWTH-CHANCE: This value is the percentage chance that the grass below the growth threshold will grow back.  The higher this value, the less the discrepancy between the behaviors of the cooperative and greedy cows.
-
-HIGH-GROWTH-CHANCE: This value is the percentage chance that the grass above the growth threshold will grow back.  The lower this value, the less the discrepancy between the behaviors of the cooperative and greedy cows.
+GRASS-GROW-PROBABILITY: This value is the percentage chance that the grass will grow back. 
 
 MAX-GRASS-HEIGHT:  This value sets the highest length to which the grass can grow.
 
