@@ -1,15 +1,3 @@
-; The idea behind this adaptation of the cooperation model is the following
-; it was noticed in the literature that population viscosity promotes altruism
-; I thought it would be a good idea to introduce the notion of occupied patches
-; Occupied patches limit the dispersal of the turtles, they are not allowed to travel
-; to these places, ie this increases population viscosity and thus altruism.
-
-; some next steps:
-; We can still simplify the advanced sliders to one kind of variable that models harshness
-; maybe get rid of the stride length and let the occupation grade be the sole variable that
-; determines viscosity?
-
-
 turtles-own [ energy ]
 patches-own [
   grass ; grass length
@@ -30,18 +18,34 @@ to setup-cows
   set-default-shape turtles "cow"   ;; applies to both breeds
 
   ; turtles should only be placed on unoccupied patches
-  ask n-of initial-cows (patches with [occupied? = false]) [
-    sprout 1 [
-      set energy metabolism * 4
-      ifelse (random-float 1.0 < cooperative-probability) [
-        set breed cooperative-cows
-        set color pink - 1.5
-        ] [
-        set breed greedy-cows
-        set color sky - 2
-        ]
+
+  let eligible-patches (patches with [not occupied?])
+
+  ifelse initial-cows <= count eligible-patches [
+    ask n-of initial-cows eligible-patches [
+      sprout-cow
     ]
- ]
+  ] [
+    repeat initial-cows [
+      ask one-of eligible-patches [
+        sprout-cow
+      ]
+    ]
+  ]
+
+end
+
+to sprout-cow
+   sprout 1 [
+        set energy metabolism * 4
+        ifelse (random-float 1.0 < cooperative-probability) [
+          set breed cooperative-cows
+          set color pink - 1.5
+        ] [
+          set breed greedy-cows
+          set color sky - 2
+        ]
+   ]
 end
 
 to setup-patches
@@ -81,7 +85,7 @@ end
 
 to grow-grass  ;; patch procedure
   if not occupied? [
-    if grass-grow-probablity >= random-float 100
+    if grass-grow-probablity > random-float 1.0
       [ set grass grass + 1 ]
     ]
     if grass > max-grass-height
@@ -116,7 +120,7 @@ to eat  ;; turtle procedure
 end
 
 to eat-cooperative  ;; turtle procedure
-  if grass > low-high-threshold [
+  if grass > grass-threshold * max-grass-height [
     set grass grass - 1
     set energy energy + grass-energy
   ]
@@ -218,7 +222,7 @@ initial-cows
 initial-cows
 0
 100
-38.0
+100.0
 1
 1
 NIL
@@ -229,12 +233,12 @@ SLIDER
 425
 661
 458
-low-high-threshold
-low-high-threshold
+grass-threshold
+grass-threshold
 0.0
-99.0
-5.0
-1.0
+0.9
+0.2
+0.1
 1
 NIL
 HORIZONTAL
@@ -248,7 +252,7 @@ stride-length
 stride-length
 0.0
 0.3
-0.07
+0.3
 0.01
 1
 NIL
@@ -263,7 +267,7 @@ max-grass-height
 max-grass-height
 1
 40
-10.0
+5.0
 1
 1
 NIL
@@ -293,7 +297,7 @@ grass-energy
 grass-energy
 0.0
 200.0
-51.0
+50.0
 1.0
 1
 NIL
@@ -384,10 +388,10 @@ advanced sliders:
 0
 
 MONITOR
-6
-471
-132
-528
+246
+531
+372
+588
 # greedy cows
 count greedy-cows
 1
@@ -395,10 +399,10 @@ count greedy-cows
 14
 
 MONITOR
-141
-471
-305
-528
+246
+468
+410
+525
 # cooperative cows
 count cooperative-cows
 1
@@ -414,11 +418,40 @@ occupation-percentage
 occupation-percentage
 0
 0.9
-0.9
+0.2
 0.1
 1
 NIL
 HORIZONTAL
+
+PLOT
+5
+467
+235
+627
+Cooperative ratio over time
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count cooperative-cows / count turtles"
+
+MONITOR
+246
+593
+366
+638
+Cooperative ratio
+(count cooperative-cows) / (count turtles)
+3
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -455,7 +488,10 @@ GRASS-GROW-PROBABILITY: This value is the percentage chance that the grass will 
 
 MAX-GRASS-HEIGHT:  This value sets the highest length to which the grass can grow.
 
-LOW-HIGH-THRESHOLD:  This value sets the grass growth threshold.  At, or above this value, the grass grows back with HIGH-GROWTH-CHANCE.  Below this value, the grass grows back with LOW-GROWTH-CHANCE.
+GRASS-THRESHOLD: The altruistic agents will not eat the grass if the grass length
+is under this proportion of the MAX-GRASS-HEIGHT, ie if MAX-GRASS-HEIGHT is 10 and
+GRASS-THRESHOLD is 0.4, then the agents will not eat the grass if its length is under
+4.
 
 ## THINGS TO NOTICE
 
