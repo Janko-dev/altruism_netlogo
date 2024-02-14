@@ -1,9 +1,9 @@
 globals
 [
-  locx
-  locy
-  max-harshness
-  max-resource
+  locx           ; x-coordinate location to spawn occupied circle
+  locy           ; y-coordinate location to spawn occupied circle
+  max-harshness  ; maximum amount of harshness in a given patch
+  max-resource   ; maximum amount of resource in a given patch
 ]
 
 turtles-own
@@ -15,14 +15,14 @@ breed [greedy-agents greedy-agent]
 
 patches-own
 [
-  resource  ; amount of resources in that patch
-  harshness ; cost of being on the patch (related to the harshness of the environment)
-;  occupied? ; boolean whether the patch is occupied by another "country"
+  resource  ; amount of resources in a given patch
+  harshness ; cost of being on the patch used as a penalty
 ]
 
+;;; simulation setup procedure
 to setup
   clear-all
-
+  ; define globals
   set max-harshness 100
   set max-resource 100
 
@@ -35,9 +35,11 @@ to setup-patches
   set locx random-xcor
   set locy random-ycor
 
+  ; spawn circle with occupation-radius and occupation-prob
+  ; all other patches get initial-patch-resource
   ask patches [
     let dist sqrt((pycor - locy)^(2) + (pxcor - locx)^(2))
-    ifelse dist < occupation-radius and random-float 1.0 < occupation-percentage [
+    ifelse dist < occupation-radius and random-float 1.0 < occupation-prob [
       set harshness initial-patch-harshness
     ] [
       set harshness 0
@@ -45,6 +47,7 @@ to setup-patches
     set resource initial-patch-resource
   ]
 
+  ; diffuse harshness to 8 neighbouring patches with diffusion rate occupation-diffusion and for repeat-diffusion times
   repeat repeat-diffusion [ diffuse harshness occupation-diffusion]
 
   ask patches [color-patch]
@@ -53,13 +56,14 @@ end
 
 to color-patch  ;; patch procedure
   let red-col (harshness / max-harshness * 255)
-  let green-col ((resource - harshness) / max-resource / 1.5 * 255)
+  let green-col ((resource - harshness) / 2 / max-resource * 255)
   set pcolor approximate-rgb red-col green-col 0
 end
 
 to setup-agents
   set-default-shape turtles "person"
 
+  ; sprout initial-population agents distributed via altruism-prob
   ask n-of initial-population patches [
    sprout 1 [
       set size 2
@@ -75,6 +79,7 @@ to setup-agents
   ]
 end
 
+;;; simulation update procedure
 to go
   ask turtles [
     move
@@ -84,22 +89,20 @@ to go
 
   ask patches [
     resource-tick
-    harshness-tick
+    color-patch
   ]
+
   if count turtles = 0 [stop]
   tick
 end
 
+;;; patch update
 to resource-tick  ;; patch procedure
   if random-float 1.0 < prob-gain-resource [ set resource resource + 1 ]
   if resource > max-resource [ set resource max-resource ]
 end
 
-to harshness-tick  ;; patch procedure
-;  if random-float 1.0 < prob-resource [ set resource resource + 1 ]
-;  if resource > 100 [ set resource 100 ]
-end
-
+;;; agent movement update
 to move
 
   let picked-patch weighted-draw
@@ -139,7 +142,7 @@ to-report weighted-draw
   report picked-patch
 end
 
-
+;;; agent eat (consumption) behaviour
 to eat  ;; turtle procedure
   if breed = altruism-agents [ eat-altruistic ]
   if breed = greedy-agents [ eat-greedy ]
@@ -147,18 +150,21 @@ end
 
 to eat-altruistic  ;; turtle procedure
   if resource > altruism-resource-threshold [
-    set resource resource - resource-energy
-    set energy energy + resource-energy
+    let resource-diff max list (resource - resource-energy) 0
+    set resource resource-diff
+    set energy energy + resource-diff
   ]
 end
 
 to eat-greedy  ;; turtle procedure
   if resource > 0 [
-    set resource resource - resource-energy
-    set energy energy + resource-energy
+    let resource-diff max list (resource - resource-energy) 0
+    set resource resource-diff
+    set energy energy + resource-diff
   ]
 end
 
+;;; agent reproduction behaviour
 to reproduce  ;; turtle procedure
   if energy > reproduction-threshold [
     set energy energy - reproduction-cost
@@ -215,11 +221,11 @@ SLIDER
 155
 220
 188
-occupation-percentage
-occupation-percentage
+occupation-prob
+occupation-prob
 0
 1
-0.59
+0.22
 0.01
 1
 NIL
@@ -249,7 +255,7 @@ occupation-radius
 occupation-radius
 0
 40
-28.0
+25.0
 1
 1
 NIL
@@ -309,7 +315,7 @@ SLIDER
 223
 initial-population
 initial-population
-0
+1
 100
 100.0
 1
@@ -326,7 +332,7 @@ occupation-diffusion
 occupation-diffusion
 0
 1
-1.0
+0.32
 0.01
 1
 NIL
@@ -341,7 +347,7 @@ repeat-diffusion
 repeat-diffusion
 0
 50
-50.0
+11.0
 1
 1
 NIL
@@ -354,9 +360,9 @@ SLIDER
 368
 stride-length
 stride-length
-0
+0.01
 1
-1.0
+0.37
 0.01
 1
 NIL
@@ -371,7 +377,7 @@ agent-move-cost
 agent-move-cost
 1
 100
-4.0
+13.0
 1
 1
 NIL
@@ -385,9 +391,9 @@ SLIDER
 altruism-resource-threshold
 altruism-resource-threshold
 0
-1
-0.09
-0.01
+100
+42.2
+0.1
 1
 NIL
 HORIZONTAL
@@ -400,8 +406,8 @@ SLIDER
 resource-energy
 resource-energy
 0
-200
-17.0
+100
+22.0
 1
 1
 NIL
@@ -415,8 +421,8 @@ SLIDER
 reproduction-threshold
 reproduction-threshold
 0
-200
-86.0
+100
+51.0
 1
 1
 NIL
@@ -431,7 +437,7 @@ reproduction-cost
 reproduction-cost
 0
 100
-26.0
+40.0
 1
 1
 NIL
@@ -459,7 +465,7 @@ SLIDER
 258
 initial-agent-energy
 initial-agent-energy
-0
+1
 100
 100.0
 1
@@ -588,7 +594,7 @@ MONITOR
 500
 535
 635
-591
+592
 # Altruists
 count altruism-agents
 0
@@ -599,7 +605,7 @@ MONITOR
 500
 600
 635
-656
+657
 # Greedy agents
 count greedy-agents
 0
@@ -610,7 +616,7 @@ MONITOR
 665
 535
 775
-591
+592
 Altruism ratio
 count altruism-agents / count turtles
 4
@@ -628,7 +634,30 @@ count altruism-agents / count turtles
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+### 1. Environment variables
+- **Control occupied space**: during setup, xy-coordinate pair is selected at random and used as the center of the occupied space.
+	- **occupation-radius**: radius of occupied circle ranging from 0 (no occupation) to 40.
+   	- **occupation-prob**: probability of space within selected circle to be occupied by which the harshness of the patch is set to the maximum harshness (100)
+	- **occupation-diffusion**: percentage of harshness of occupied space to be diffused amongst the 8 surrounding neighbours. range [0, 1]
+	- **repeat-diffusion**: amount of times to diffuse the harshness value amongst the 8 neighbours. range [0, 50]
+- **Resource and Harshness**: controls initial resources and harshness of patches and the probability for a patch to gain new resources. 
+	- **initial-patch-resource**: initial amount of resources allocated to the patches. range [0, 100]
+	- **initial-patch-harshness**: initial amount of harshness allocated to the patches *selected to be occupied*. Thus a subset of patches are initially given the specified harshness. Note that the initial harshness is thereafter diffused according to the corresponding parameters. range [0, 100]
+
+### 2. Agent variables
+- **Agent population**: control distribution of altruist/greedy agents and their initial conditions.
+	- **altruism-prob**: probability of spawning an altruist agent
+	- **initial-population**: amount of initial agents. range [1, 100]
+	- **initial-agent-energt**: amount of initial energy given to each agent. range [1, 100]
+- **Agent movement**: control cost and range of movement
+	- **agent-move-cots**: cost of making a move in the simulation. range [1, 100]
+	- **stride-length**: the amount of space that an agent can move. range [0.01, 1]
+- **Agent energy consumption**: control "eating" behaviour of agents
+	- **resource-energy**: amount of energy that a patch (with positive resources) gives when an agent decides to consume energy. The resource consumed is the same amount that gets added to the agent's energy reservoire. Naturally, when the consumption of resources is higher than the amount of available resources, then max(patch-resource - resource-energy, 0) is taken to distribute the energy. range [0, 100]  
+	- **altruism-resource-threshold**: specifically, for altruist agents, they consume energy if and only if the resource at a given patch is higher than this threshold. This way, altruists are less greedy and confer economic benefit to other agents. range [0, 100]
+- **Agent reproduction**: control rate at which agents reproduce new agents.
+	- **reproduction-threshold**: threshold of current agent energy that controls if the agent is able to produce offspring. range [0, 100]
+	- **reproduction-cost**: cost of energy to produce offspring. range [0, 100]
 
 ## THINGS TO NOTICE
 
@@ -963,6 +992,65 @@ NetLogo 6.3.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="experiment" repetitions="10" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>count altruism-agents</metric>
+    <metric>count greedy-agents</metric>
+    <metric>count altruism-agents / count turtles</metric>
+    <metric>mean [energy] of turtles</metric>
+    <enumeratedValueSet variable="altruism-resource-threshold">
+      <value value="42.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-patch-resource">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="occupation-prob">
+      <value value="0.22"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="occupation-radius">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-move-cost">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-population">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="stride-length">
+      <value value="0.22"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-agent-energy">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-threshold">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="occupation-diffusion">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="altruism-prob">
+      <value value="0.68"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="resource-energy">
+      <value value="22"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-gain-resource">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="repeat-diffusion">
+      <value value="11"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-cost">
+      <value value="40"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-patch-harshness">
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
