@@ -151,7 +151,7 @@ end
 to eat-altruistic  ;; turtle procedure
   if resource > altruism-resource-threshold [
     let resource-diff max list (resource - resource-energy) 0
-    set resource resource-diff
+    set resource resource - 1
     set energy energy + resource-diff
   ]
 end
@@ -159,7 +159,7 @@ end
 to eat-greedy  ;; turtle procedure
   if resource > 0 [
     let resource-diff max list (resource - resource-energy) 0
-    set resource resource-diff
+    set resource resource - 1
     set energy energy + resource-diff
   ]
 end
@@ -193,8 +193,8 @@ GRAPHICS-WINDOW
 25
 -25
 25
-1
-1
+0
+0
 1
 ticks
 30.0
@@ -225,7 +225,7 @@ occupation-prob
 occupation-prob
 0
 1
-0.22
+1.0
 0.01
 1
 NIL
@@ -240,7 +240,7 @@ initial-patch-resource
 initial-patch-resource
 0
 100
-100.0
+60.0
 1
 1
 NIL
@@ -255,7 +255,7 @@ occupation-radius
 occupation-radius
 0
 40
-25.0
+40.0
 1
 1
 NIL
@@ -270,7 +270,7 @@ initial-patch-harshness
 initial-patch-harshness
 0
 100
-100.0
+10.0
 1
 1
 NIL
@@ -302,7 +302,7 @@ altruism-prob
 altruism-prob
 0
 1
-0.68
+0.5
 0.01
 1
 NIL
@@ -317,7 +317,7 @@ initial-population
 initial-population
 1
 100
-100.0
+65.0
 1
 1
 NIL
@@ -332,7 +332,7 @@ occupation-diffusion
 occupation-diffusion
 0
 1
-0.32
+1.0
 0.01
 1
 NIL
@@ -347,7 +347,7 @@ repeat-diffusion
 repeat-diffusion
 0
 50
-11.0
+50.0
 1
 1
 NIL
@@ -362,7 +362,7 @@ stride-length
 stride-length
 0.01
 1
-0.37
+0.26
 0.01
 1
 NIL
@@ -392,7 +392,7 @@ altruism-resource-threshold
 altruism-resource-threshold
 0
 100
-42.2
+20.6
 0.1
 1
 NIL
@@ -420,10 +420,10 @@ SLIDER
 548
 reproduction-threshold
 reproduction-threshold
-0
-100
-51.0
-1
+50
+200
+75.0
+5
 1
 NIL
 HORIZONTAL
@@ -435,9 +435,9 @@ SLIDER
 583
 reproduction-cost
 reproduction-cost
-0
+50
 100
-40.0
+75.0
 1
 1
 NIL
@@ -452,7 +452,7 @@ prob-gain-resource
 prob-gain-resource
 0
 1
-0.5
+1.0
 0.01
 1
 NIL

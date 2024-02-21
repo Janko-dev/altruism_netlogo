@@ -148,3 +148,5 @@ fabric.properties
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/jupyternotebooks,pycharm,visualstudiocode
+
+.DS_Store
