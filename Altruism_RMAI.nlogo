@@ -1,9 +1,11 @@
 globals
 [
-  locx           ; x-coordinate location to spawn occupied circle
-  locy           ; y-coordinate location to spawn occupied circle
-  max-harshness  ; maximum amount of harshness in a given patch
-  max-resource   ; maximum amount of resource in a given patch
+  locx            ; x-coordinate location to spawn occupied circle
+  locy            ; y-coordinate location to spawn occupied circle
+  max-harshness   ; maximum amount of harshness in a given patch
+  max-resource    ; maximum amount of resource in a given patch
+;  altruism-counts ; list of altruist counts for each tick
+;  greedy-counts   ; list of greedy counts for each tick
 ]
 
 turtles-own
@@ -19,12 +21,42 @@ patches-own
   harshness ; cost of being on the patch used as a penalty
 ]
 
+to-report maps-to [x lower upper]
+  report x * (upper - lower) + lower
+end
+
+to setup-via-control-vars
+  clear-all
+  ; define globals
+  set max-harshness 50
+  set max-resource  50
+  ; set all variables via control vars
+  set occupation-prob occupation-var
+  set occupation-radius maps-to occupation-var 0 40
+  set occupation-diffusion occupation-var
+
+  set agent-move-cost maps-to viscosity-var 20 1
+  set stride-length maps-to viscosity-var 1 0.01
+
+  set prob-gain-resource consumption-var
+  set energy-gain maps-to consumption-var 100 0
+
+  set reproduction-threshold maps-to reproduction-var 50 200
+  set reproduction-cost maps-to reproduction-var 50 100
+
+  setup-patches
+  setup-agents
+  reset-ticks
+end
+
 ;;; simulation setup procedure
 to setup
   clear-all
   ; define globals
-  set max-harshness 100
-  set max-resource 100
+  set max-harshness 50
+  set max-resource  50
+;  set altruism-counts []
+;  set greedy-counts []
 
   setup-patches
   setup-agents
@@ -55,9 +87,17 @@ to setup-patches
 end
 
 to color-patch  ;; patch procedure
-  let red-col (harshness / max-harshness * 255)
-  let green-col ((resource - harshness) / 2 / max-resource * 255)
-  set pcolor approximate-rgb red-col green-col 0
+;  let green-col (((resource / max-resource) - (harshness / max-harshness)) * 255)
+;  let green-col (((resource / max-resource)) * 255)
+;  let red-col (((harshness / max-harshness)) * 255)
+;  set pcolor approximate-rgb red-col green-col 0
+
+  let green-col (resource / max-resource * 255)
+  let red-col 0
+  if harshness > 0 [
+    set red-col (harshness / max-harshness * 255)
+  ]
+  set pcolor approximate-rgb red-col (green-col - red-col) 0
 end
 
 to setup-agents
@@ -91,7 +131,6 @@ to go
     resource-tick
     color-patch
   ]
-
   if count turtles = 0 [stop]
   tick
 end
@@ -150,23 +189,21 @@ end
 
 to eat-altruistic  ;; turtle procedure
   if resource > altruism-resource-threshold [
-    let resource-diff max list (resource - resource-energy) 0
     set resource resource - 1
-    set energy energy + resource-diff
+    set energy energy + energy-gain
   ]
 end
 
 to eat-greedy  ;; turtle procedure
   if resource > 0 [
-    let resource-diff max list (resource - resource-energy) 0
     set resource resource - 1
-    set energy energy + resource-diff
+    set energy energy + energy-gain
   ]
 end
 
 ;;; agent reproduction behaviour
 to reproduce  ;; turtle procedure
-  if energy > reproduction-threshold [
+  if energy > reproduction-threshold and count turtles < 1000 [
     set energy energy - reproduction-cost
     hatch 1
   ]
@@ -225,7 +262,7 @@ occupation-prob
 occupation-prob
 0
 1
-1.0
+0.9
 0.01
 1
 NIL
@@ -239,8 +276,8 @@ SLIDER
 initial-patch-resource
 initial-patch-resource
 0
-100
-60.0
+50
+50.0
 1
 1
 NIL
@@ -255,7 +292,7 @@ occupation-radius
 occupation-radius
 0
 40
-40.0
+36.0
 1
 1
 NIL
@@ -269,8 +306,8 @@ SLIDER
 initial-patch-harshness
 initial-patch-harshness
 0
-100
-10.0
+50
+45.0
 1
 1
 NIL
@@ -302,7 +339,7 @@ altruism-prob
 altruism-prob
 0
 1
-0.5
+0.9
 0.01
 1
 NIL
@@ -317,7 +354,7 @@ initial-population
 initial-population
 1
 100
-65.0
+100.0
 1
 1
 NIL
@@ -332,7 +369,7 @@ occupation-diffusion
 occupation-diffusion
 0
 1
-1.0
+0.9
 0.01
 1
 NIL
@@ -346,8 +383,8 @@ SLIDER
 repeat-diffusion
 repeat-diffusion
 0
-50
-50.0
+10
+2.0
 1
 1
 NIL
@@ -362,8 +399,8 @@ stride-length
 stride-length
 0.01
 1
-0.26
-0.01
+0.10899999999999999
+0.05
 1
 NIL
 HORIZONTAL
@@ -376,8 +413,8 @@ SLIDER
 agent-move-cost
 agent-move-cost
 1
-100
-13.0
+20
+2.8999999999999986
 1
 1
 NIL
@@ -392,8 +429,8 @@ altruism-resource-threshold
 altruism-resource-threshold
 0
 100
-20.6
-0.1
+90.0
+1
 1
 NIL
 HORIZONTAL
@@ -401,13 +438,13 @@ HORIZONTAL
 SLIDER
 270
 405
-465
+467
 438
-resource-energy
-resource-energy
+energy-gain
+energy-gain
 0
 100
-22.0
+10.0
 1
 1
 NIL
@@ -422,7 +459,7 @@ reproduction-threshold
 reproduction-threshold
 50
 200
-75.0
+185.0
 5
 1
 NIL
@@ -437,7 +474,7 @@ reproduction-cost
 reproduction-cost
 50
 100
-75.0
+95.0
 1
 1
 NIL
@@ -452,7 +489,7 @@ prob-gain-resource
 prob-gain-resource
 0
 1
-1.0
+0.9
 0.01
 1
 NIL
@@ -507,7 +544,7 @@ TEXTBOX
 40
 310
 210
-341
+328
 Resource and Harshness
 14
 0.0
@@ -622,6 +659,93 @@ count altruism-agents / count turtles
 4
 1
 14
+
+SLIDER
+40
+495
+212
+528
+occupation-var
+occupation-var
+0
+1
+0.9
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+40
+530
+212
+563
+viscosity-var
+viscosity-var
+0
+1
+0.9
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+40
+565
+212
+598
+consumption-var
+consumption-var
+0
+1
+0.9
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+40
+600
+212
+633
+reproduction-var
+reproduction-var
+0
+1
+0.9
+0.1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+40
+465
+225
+490
+Coarse-grain Control\n
+18
+0.0
+1
+
+BUTTON
+40
+640
+210
+673
+setup via control vars
+setup-via-control-vars
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -999,55 +1123,184 @@ NetLogo 6.3.0
     <timeLimit steps="100"/>
     <metric>count altruism-agents</metric>
     <metric>count greedy-agents</metric>
-    <metric>count altruism-agents / count turtles</metric>
     <metric>mean [energy] of turtles</metric>
     <enumeratedValueSet variable="altruism-resource-threshold">
-      <value value="42.2"/>
+      <value value="20"/>
+      <value value="40"/>
+      <value value="60"/>
+      <value value="80"/>
+      <value value="100"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="initial-patch-resource">
       <value value="100"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="occupation-prob">
-      <value value="0.22"/>
+      <value value="0.2"/>
+      <value value="0.4"/>
+      <value value="0.6"/>
+      <value value="0.8"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="occupation-radius">
-      <value value="30"/>
+      <value value="8"/>
+      <value value="16"/>
+      <value value="24"/>
+      <value value="32"/>
+      <value value="40"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="agent-move-cost">
       <value value="4"/>
+      <value value="8"/>
+      <value value="12"/>
+      <value value="16"/>
+      <value value="20"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="initial-population">
       <value value="100"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="stride-length">
-      <value value="0.22"/>
+      <value value="0.2"/>
+      <value value="0.4"/>
+      <value value="0.6"/>
+      <value value="0.8"/>
+      <value value="1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="initial-agent-energy">
       <value value="100"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-threshold">
-      <value value="51"/>
+      <value value="50"/>
+      <value value="80"/>
+      <value value="110"/>
+      <value value="140"/>
+      <value value="170"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="occupation-diffusion">
-      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.4"/>
+      <value value="0.6"/>
+      <value value="0.8"/>
+      <value value="1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="altruism-prob">
-      <value value="0.68"/>
+      <value value="0.2"/>
+      <value value="0.4"/>
+      <value value="0.6"/>
+      <value value="0.8"/>
+      <value value="1"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="resource-energy">
-      <value value="22"/>
+    <enumeratedValueSet variable="energy-gain">
+      <value value="20"/>
+      <value value="40"/>
+      <value value="60"/>
+      <value value="80"/>
+      <value value="100"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="prob-gain-resource">
-      <value value="0.5"/>
+      <value value="0.2"/>
+      <value value="0.4"/>
+      <value value="0.6"/>
+      <value value="0.8"/>
+      <value value="1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="repeat-diffusion">
-      <value value="11"/>
+      <value value="4"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-cost">
-      <value value="40"/>
+      <value value="50"/>
+      <value value="60"/>
+      <value value="70"/>
+      <value value="80"/>
+      <value value="90"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="initial-patch-harshness">
+      <value value="10"/>
+      <value value="20"/>
+      <value value="30"/>
+      <value value="40"/>
+      <value value="50"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment" repetitions="10" runMetricsEveryStep="true">
+    <setup>setup-via-control-vars</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <exitCondition>not any? turtles</exitCondition>
+    <metric>count altruism-agents</metric>
+    <metric>count greedy-agents</metric>
+    <metric>mean [energy] of turtles</metric>
+    <enumeratedValueSet variable="occupation-var">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="consumption-var">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="altruism-resource-threshold">
+      <value value="10"/>
+      <value value="50"/>
+      <value value="90"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-patch-resource">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="viscosity-var">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="occupation-prob">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="occupation-radius">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-var">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-move-cost">
+      <value value="18.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="energy-gain">
+      <value value="40"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-population">
       <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="stride-length">
+      <value value="0.901"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-agent-energy">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-threshold">
+      <value value="110"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="occupation-diffusion">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="altruism-prob">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-gain-resource">
+      <value value="0.6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="repeat-diffusion">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-cost">
+      <value value="70"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-patch-harshness">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="45"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
