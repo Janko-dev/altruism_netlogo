@@ -307,7 +307,7 @@ initial-patch-harshness
 initial-patch-harshness
 0
 50
-45.0
+50.0
 1
 1
 NIL
@@ -429,7 +429,7 @@ altruism-resource-threshold
 altruism-resource-threshold
 0
 100
-80.0
+20.0
 1
 1
 NIL
@@ -459,7 +459,7 @@ reproduction-threshold
 reproduction-threshold
 50
 200
-185.0
+125.0
 5
 1
 NIL
@@ -474,7 +474,7 @@ reproduction-cost
 reproduction-cost
 50
 100
-95.0
+75.0
 1
 1
 NIL
@@ -714,7 +714,7 @@ reproduction-var
 reproduction-var
 0
 1
-0.9
+0.5
 0.1
 1
 NIL
@@ -1262,6 +1262,79 @@ NetLogo 6.3.0
       <value value="20"/>
       <value value="50"/>
       <value value="80"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-patch-resource">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-population">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-agent-energy">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="altruism-prob">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="repeat-diffusion">
+      <value value="2"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment 3" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup-via-control-vars</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <exitCondition>not any? turtles</exitCondition>
+    <metric>count altruism-agents</metric>
+    <metric>count greedy-agents</metric>
+    <enumeratedValueSet variable="occupation-var">
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-patch-harshness">
+      <value value="5"/>
+      <value value="10"/>
+      <value value="15"/>
+      <value value="20"/>
+      <value value="25"/>
+      <value value="30"/>
+      <value value="35"/>
+      <value value="40"/>
+      <value value="45"/>
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-gain-resource">
+      <value value="0.2"/>
+      <value value="0.4"/>
+      <value value="0.6"/>
+      <value value="0.8"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="stride-length">
+      <value value="0.01"/>
+      <value value="0.05"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-move-cost">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="energy-gain">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="altruism-resource-threshold">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-var">
+      <value value="0.5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="initial-patch-resource">
       <value value="50"/>
