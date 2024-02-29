@@ -1,5 +1,7 @@
 # altruism_netlogo
 
+Datasets can be found on OSF: https://osf.io/nws82/
+
 ## Experiment Stage 1
 
 ["occupation-var" 0.1 0.5 0.9]
